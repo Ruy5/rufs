@@ -88,4 +88,27 @@ public class FileController {
     }
 
 
+    @GetMapping("/vedio/download")
+    public ResponseEntity<Resource> loadVedioFileAsResource(@RequestParam("filename") String filename) throws FileNotFoundException {
+        try {
+            // 获取文件存储路径
+            String uploadDir = env.getProperty("file.upload-dir");
+
+            Path filePath = Paths.get(uploadDir).resolve(filename).normalize();
+            Resource resource = new UrlResource(filePath.toUri());
+
+            if (resource.exists()) {
+                return ResponseEntity.ok()
+                        .contentType(MediaType.parseMediaType("video/mp4"))
+                        .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + resource.getFilename() + "\"")
+                        .body(resource);
+            } else {
+                throw new FileNotFoundException("File not found " + filename);
+            }
+        } catch (MalformedURLException | FileNotFoundException ex) {
+            throw new FileNotFoundException("File not found " + filename);
+        }
+    }
+
+
 }
