@@ -37,9 +37,6 @@ public class FileController {
             // 获取文件存储路径
             String uploadDir = env.getProperty("file.upload-dir");
 
-            System.out.println("File Name: " + file.getOriginalFilename());
-            System.out.println("Content Type: " + file.getContentType());
-            System.out.println("File Size: " + file.getSize());
             String fileName = Objects.requireNonNull(file.getContentType()).replace('/', '-') + "-" + Instant.now().toEpochMilli() +  file.getOriginalFilename() ;
             Path path = Paths.get(uploadDir + "/" + fileName);
             Files.write(path, file.getBytes());
@@ -87,7 +84,48 @@ public class FileController {
         }
     }
 
+    @GetMapping("/html")
+    public ResponseEntity<Resource> loadHtmlAsResource(@RequestParam("filename") String filename) throws FileNotFoundException {
+        try {
+            // 获取文件存储路径
+            String uploadDir = env.getProperty("file.upload-dir");
 
+            Path filePath = Paths.get(uploadDir).resolve(filename).normalize();
+            Resource resource = new UrlResource(filePath.toUri());
+
+            if (resource.exists()) {
+                return ResponseEntity.ok()
+                        .contentType(MediaType.TEXT_HTML)
+                        .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + resource.getFilename() + "\"")
+                        .body(resource);
+            } else {
+                throw new FileNotFoundException("File not found " + filename);
+            }
+        } catch (MalformedURLException | FileNotFoundException ex) {
+            throw new FileNotFoundException("File not found " + filename);
+        }
+    }
+    @GetMapping("/css")
+    public ResponseEntity<Resource> loadCssAsResource(@RequestParam("filename") String filename) throws FileNotFoundException {
+        try {
+            // 获取文件存储路径
+            String uploadDir = env.getProperty("file.upload-dir");
+
+            Path filePath = Paths.get(uploadDir).resolve(filename).normalize();
+            Resource resource = new UrlResource(filePath.toUri());
+
+            if (resource.exists()) {
+                return ResponseEntity.ok()
+                        .contentType(MediaType.parseMediaType("text/css"))
+                        .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + resource.getFilename() + "\"")
+                        .body(resource);
+            } else {
+                throw new FileNotFoundException("File not found " + filename);
+            }
+        } catch (MalformedURLException | FileNotFoundException ex) {
+            throw new FileNotFoundException("File not found " + filename);
+        }
+    }
     @GetMapping("/vedio/download")
     public ResponseEntity<Resource> loadVedioFileAsResource(@RequestParam("filename") String filename) throws FileNotFoundException {
         try {
