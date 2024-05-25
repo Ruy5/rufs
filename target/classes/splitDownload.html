@@ -16,22 +16,29 @@
         const chunkSize = 1024 * 1024;  // 1 MB chunks
         let chunkNumber = 0;
         let chunks = [];
+        let fileSize = 0;
 
         // Fetch the first chunk to determine the file size
-        let firstChunk = await fetchChunk(identifier, chunkNumber, chunkSize);
-        if (!firstChunk) {
+        let firstResponse = await fetchChunk(identifier, chunkNumber, chunkSize);
+        if (!firstResponse) {
             console.error('Failed to download the first chunk');
             return;
         }
 
-        let fileSize = parseInt(firstChunk.headers.get('Content-Length'));
-        chunks.push(await firstChunk.blob());
+        fileSize = parseInt(firstResponse.headers.get('Content-Length'));
+        console.log(">1", fileSize)
+        await firstResponse.blob()
+        console.log(">1-2")
+        chunks.push(await firstResponse.blob());
+        console.log(">2", fileSize)
         chunkNumber++;
 
+        console.log(`${chunkNumber * chunkSize} < ${fileSize}}`)
         while (chunkNumber * chunkSize < fileSize) {
-            let chunk = await fetchChunk(identifier, chunkNumber, chunkSize);
-            if (chunk) {
-                chunks.push(await chunk.blob());
+            console.log(chunkNumber)
+            let chunkResponse = await fetchChunk(identifier, chunkNumber, chunkSize);
+            if (chunkResponse) {
+                chunks.push(await chunkResponse.blob());
                 chunkNumber++;
             } else {
                 console.error('Failed to download chunk', chunkNumber);

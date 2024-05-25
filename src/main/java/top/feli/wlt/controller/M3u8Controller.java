@@ -7,64 +7,61 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import top.feli.wlt.model.Result;
+import top.feli.wlt.utils.CreateDirectoryIfNotExistsUtil;
+import top.feli.wlt.utils.RemoveNonAlphanumeric;
 import top.feli.wlt.utils.VideoToM3u8AndTSUtil;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.time.Instant;
 import java.util.Objects;
 
-/**
- * @description:
- * @package: com.example.m3u8
- * @author: zheng
- * @date: 2023/10/28
- */
+
 @CrossOrigin("*")
 @RestController
-@RequestMapping("/video")
-public class VideoController {
+@RequestMapping("/m3u8")
+public class M3u8Controller {
     @Autowired
     private Environment env;
     @PostMapping("/upload")
-    public ResponseEntity<String> upload(MultipartFile file) {
-        String uploadDir = env.getProperty("file.upload-dir");
-        if (file == null) {
-            return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+    public Result upload(MultipartFile file, @RequestParam(value = "project", defaultValue = "other") String project) throws IOException {
+        if (file == null || file.isEmpty()) {
+            return Result.Error("未找到上传文件内容！");
         }
 
-        if (file.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
-        }
+        String uploadDir = env.getProperty("file.upload-dir") + "/" + project;
+        new CreateDirectoryIfNotExistsUtil(uploadDir);
 
+        String fileName = RemoveNonAlphanumeric.transfrom(Instant.now().toEpochMilli() +  file.getOriginalFilename() ) ;
 
         try {
-
-            boolean written = VideoToM3u8AndTSUtil.write(file.getInputStream(), uploadDir + "/", file.getOriginalFilename());
+            boolean written = VideoToM3u8AndTSUtil.write(file.getInputStream(), uploadDir + "/", fileName);
             if (!written) {
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+                return Result.Error("文件上传失败");
             }
-            String srcPathname = uploadDir + "/" + file.getOriginalFilename();
-            String filename = VideoToM3u8AndTSUtil.getFilenameWithoutSuffix(Objects.requireNonNull(file.getOriginalFilename()));
+            String srcPathname = uploadDir + "/" + fileName;
+            String filename = VideoToM3u8AndTSUtil.getFilenameWithoutSuffix(Objects.requireNonNull(fileName));
             String destPathname = uploadDir + "/" + filename + ".m3u8";
 
-            boolean converted = VideoToM3u8AndTSUtil.convert(srcPathname, destPathname);
+            boolean converted = VideoToM3u8AndTSUtil.convert(srcPathname, destPathname, String.format("/m3u8/ts/%s/", project));
             if (!converted) {
-                return ResponseEntity.notFound().build();
+                return Result.Error("m3u8转换失败");
             }
 
-            return ResponseEntity.ok("/video/m3u8?filename=" + filename + ".m3u8");
+            return Result.OkUpload("/m3u8/index",  filename + ".m3u8", "application/vnd.apple.mpegurl", project);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
 
-    @GetMapping("/m3u8")
-    public ResponseEntity<byte[]> getM3U8Content(@RequestParam String filename) {
+    @GetMapping("/index")
+    public ResponseEntity<byte[]> getM3U8Content(@RequestParam String filename, @RequestParam(value = "project", defaultValue = "other") String project) {
         try {
 
-            String filepath = env.getProperty("file.upload-dir");
-            File file = new File(filepath, filename);
+            String uploadDir = env.getProperty("file.upload-dir") + "/" + project;
+            File file = new File(uploadDir, filename);
 
             if (file.exists()) {
                 // 读取M3U8文件内容
@@ -87,10 +84,10 @@ public class VideoController {
     }
 
 
-    @GetMapping("/{filename}")
-    public ResponseEntity<byte[]> getTSContent(@PathVariable String filename) {
+    @GetMapping("/ts/{project}/{filename}")
+    public ResponseEntity<byte[]> getTSContent(@PathVariable String project, @PathVariable String filename) {
         try {
-            String uploadDir = env.getProperty("file.upload-dir");
+            String uploadDir = env.getProperty("file.upload-dir") + "/" + project;
             System.out.println(filename);
             File file = new File(uploadDir + "/", filename);
 
