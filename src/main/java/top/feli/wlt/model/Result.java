@@ -3,11 +3,13 @@ package top.feli.wlt.model;
 import lombok.Data;
 
 @Data
-public class Result {
+public class Result<T> {
     private Integer errno;
-    private ResultData data;
-
+    private T data;
     private String message;
+    private String project;
+
+    private Float schedule = 1.0f;
 
     public Result(Integer errno, String message) {
         this.errno = errno;
@@ -15,9 +17,9 @@ public class Result {
     }
 
 
-    public Result(Integer errno, String url, String alt, String href) {
+    public Result(Integer errno, T data) {
         this.errno = errno;
-        this.data = new ResultData(url, alt, href);
+        this.data = data;
     }
 
 //    public static Result Ok(String url, String alt, String href){
@@ -25,12 +27,21 @@ public class Result {
 //        return result;
 //    }
 
-    public static Result OkUpload(String router, String fileName, String mediaType, String project) {
+    public static Result<SimpleData> OkUpload(String router, String fileName, String mediaType, String project) {
         String url = String.format("%s?filename=%s&mediaType=%s&project=%s", router, fileName, mediaType, project);
-        Result result = new Result(0, url, fileName, "http://localhost:1024" + url);
-        return result;
+        return new Result<SimpleData>(0, new SimpleData(url, fileName, "http://localhost:1024" + url));
     }
 
+    // fileName=%s&fileMd5=%s&chunkSize=%s&chunkCount=
+    public static Result<SliceData> OkSliceUpload(
+            String router, String fileName, String fileMd5, Integer chunkSize,Integer chunkCount,
+            String project, Float schedule) {
+        String url = String.format("%s?filename=%s&fileMd5=%s&project=%s&chunkCount=%s", router, fileName, fileMd5, project, chunkCount);
+        Result<SliceData> sliceDataResult = new Result<>(0, new SliceData(router, fileName, fileMd5, chunkSize, chunkCount));
+        sliceDataResult.schedule = schedule;
+        return sliceDataResult;
+    }
+//    public static Re
 
     public static Result Error(String message){
         Result result = new Result(1, message);

@@ -3,10 +3,14 @@ package top.feli.wlt.controller;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import top.feli.wlt.model.Result;
 import top.feli.wlt.utils.CreateDirectoryIfNotExistsUtil;
 import top.feli.wlt.utils.RemoveNonAlphanumeric;
 
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.Map;
 import java.util.Objects;
@@ -31,8 +35,8 @@ public class SliceFileController {
      * @param currentIndex 当前分片索引
      */
     @PostMapping("/upload")
-    public float upload(MultipartFile file, String fileName, String fileMd5, Integer chunkCount, Integer currentIndex,
-                        @RequestParam(value = "project", defaultValue = "other") String project) throws IOException {
+    public Result upload(MultipartFile file, String fileName, String fileMd5, Integer chunkCount, Integer currentIndex,
+                         @RequestParam(value = "project", defaultValue = "other") String project) throws IOException {
         // 去除中文
         fileName = RemoveNonAlphanumeric.transfrom(fileName) ;
         // 拼接路径
@@ -45,22 +49,53 @@ public class SliceFileController {
             accessFile.write(file.getBytes());
             fileCountMap.put(fileMd5, fileCountMap.getOrDefault(fileMd5,0)+1);
             if(Objects.equals(fileCountMap.get(fileMd5), chunkCount)){
-                System.out.println("上传完成："+tempFilePath);
                 fileCountMap.remove(fileMd5);
-                return 1.0f;
+                return Result.OkSliceUpload ("/slicefile/download", fileName, fileMd5, 1024000, chunkCount, project, 1.0f);
+                     //   String.format("http://localhost:1024/slicefile/download?fileName=%s&fileMd5=%s&chunkSize=%s&chunkCount=", fileName, fileMd5, 1000, chunkCount);
             }else{
-                System.out.println(fileMd5+currentIndex + "件上传中");
-                return (float) fileCountMap.get(fileMd5) / chunkCount;
+                return Result.OkSliceUpload ("/slicefile/download", fileName, fileMd5, 1024000, chunkCount, project, ((float) fileCountMap.get(fileMd5) / chunkCount));
             }
         }catch (Exception e){
             throw new RuntimeException(e);
         }
     }
 
-//    private void checkFilePath(){
-//        File file = new File(saveDir);
-//        if(!file.exists()){
-//            file.mkdirs();
-//        }
-//    }
+    /**
+     * 分片下载接口
+     * @param fileName 文件名称
+     * @param fileMd5 文件MD5值
+     * @param chunkSize 分片大小
+     * @param currentIndex 当前分片索引
+     * @param project 项目名
+     * @return 文件分片的字节数组
+     */
+    @GetMapping("/download")
+    public byte[] download(@RequestParam String fileName, @RequestParam String fileMd5,
+                           @RequestParam Integer chunkSize, @RequestParam Integer currentIndex,
+                           @RequestParam(value = "project", defaultValue = "other") String project) throws IOException {
+        fileName = RemoveNonAlphanumeric.transfrom(fileName);
+        String uploadDir = saveDir + File.separator + project + File.separator;
+        String filePath = uploadDir + fileMd5 + fileName;
+
+        Path path = Paths.get(filePath);
+        System.out.println(path);
+        if (!Files.exists(path)) {
+            throw new FileNotFoundException("File not found");
+        }
+
+        try (RandomAccessFile accessFile = new RandomAccessFile(filePath, "r")) {
+            long fileSize = accessFile.length();
+            long start = currentIndex * chunkSize;
+            long end = Math.min(start + chunkSize, fileSize);
+            if (start >= fileSize) {
+                throw new IOException("Invalid chunk index");
+            }
+
+            byte[] buffer = new byte[(int) (end - start)];
+            accessFile.seek(start);
+            accessFile.read(buffer);
+
+            return buffer;
+        }
+    }
 }
