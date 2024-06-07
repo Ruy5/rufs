@@ -1,8 +1,8 @@
 {
     "name": "rufs",
-    "version": "0.0.0",
+    "version": "0.0.1",
+    "private": false,
     "description": "a",
-    "main": "index.js",
     "scripts": {
       "test": "echo \"Error: no test specified\" && exit 1",
       "build": "rollup --config rollup.config.js",
@@ -11,6 +11,11 @@
     "author": "",
     "license": "ISC",
     "type": "module",
+    "files": [
+      "dist/*"
+    ],    
+    "main": "dist/rufs.cjs.js",
+    "module": "dist/rufs.esm.js",
     "dependencies": {
     },
     "devDependencies": {
