@@ -7,13 +7,34 @@
 </head>
 <body>
     <button id="upload">简单文件上传</button>
+    <button id="dwonload">简单文件下载</button>
+    <button id="sliceUpload">分片文件上传</button>
+    <button id="sliceDownload">分片文件下载</button>
     <script >
-        document.getElementsByTagName("button")[0].addEventListener("click", () =>  window.rufs.simpleUpload("http://localhost:1024/simplefile/upload", "wl"))
-        // document.getElementById("upload").addEventListener("click", () => uploadFunc())
+        document.getElementById("upload").addEventListener("click", async () =>  {
+            const res = await window.rufs.simpleUpload("http://localhost:1024/simplefile/upload", "wl")
+            console.log(res)
+        })
+        document.getElementById("dwonload").addEventListener("click", async () =>  {
+            const res = await window.rufs.simpleDownload("http://localhost:1024/simplefile/download?filename=1717810534479logo.png&mediaType=image/png&project=wl")
+            console.log(res)
+        })
 
-        // const uploadFunc = () => {
-
-        // }
+        document.getElementById("sliceUpload").addEventListener("click",  async () =>  {
+            const res = await window.rufs.sliceUpload("http://localhost:1024/slicefile/upload","wl", 1024*1000)
+            console.log(res)
+        })
+        let params ={
+            "router": "/slicefile/download",
+            "fileName": "jdk-17.0.6.zip",
+            "fileMd5": "809837a1f22ea85ea70ab4d63447e013",
+            "chunkSize": 1024000,
+            "chunkCount": 177,
+            "project": "wl"
+        }
+        document.getElementById("sliceDownload").addEventListener("click",  async () =>  {
+            await window.rufs.sliceDownload("http://localhost:1024"+params.router, params)
+        })
     </script>
 </body>
 </html>

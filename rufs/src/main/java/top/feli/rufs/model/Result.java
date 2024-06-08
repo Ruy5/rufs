@@ -37,7 +37,7 @@ public class Result<T> {
             String router, String fileName, String fileMd5, Integer chunkSize,Integer chunkCount,
             String project, Float schedule) {
         String url = String.format("%s?filename=%s&fileMd5=%s&project=%s&chunkCount=%s", router, fileName, fileMd5, project, chunkCount);
-        Result<SliceData> sliceDataResult = new Result<>(0, new SliceData(router, fileName, fileMd5, chunkSize, chunkCount));
+        Result<SliceData> sliceDataResult = new Result<>(0, new SliceData(router, fileName, fileMd5, chunkSize, chunkCount, project));
         sliceDataResult.schedule = schedule;
         return sliceDataResult;
     }

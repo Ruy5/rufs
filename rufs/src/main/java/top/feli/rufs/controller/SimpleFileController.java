@@ -55,7 +55,8 @@ public class SimpleFileController {
     public ResponseEntity<Resource> loadFileAsResource(
             @RequestParam("filename") String filename,
             @RequestParam(value = "mediaType", defaultValue = "image/jpeg") String mediaType,
-            @RequestParam(value = "project", defaultValue = "other") String project
+            @RequestParam(value = "project", defaultValue = "other") String project,
+            @RequestParam(value = "disposition", defaultValue = "inline") String disposition // attachment
     ) throws FileNotFoundException {
         try {
             // 获取文件存储路径
@@ -67,7 +68,7 @@ public class SimpleFileController {
             if (resource.exists()) {
                 return ResponseEntity.ok()
                         .contentType(MediaType.parseMediaType(mediaType))
-                        .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + resource.getFilename() + "\"")
+                        .header(HttpHeaders.CONTENT_DISPOSITION, disposition+"; filename=\"" + resource.getFilename() + "\"")
                         .body(resource);
             } else {
                 throw new FileNotFoundException("File not found " + filename);
