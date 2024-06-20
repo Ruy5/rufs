@@ -8,3 +8,4 @@ const rufs = {
 }
 window.rufs = rufs
 export default rufs
+
