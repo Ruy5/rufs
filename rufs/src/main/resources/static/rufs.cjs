@@ -1,10 +1,4 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-    <script >
-        'use strict';
+'use strict';
 
 const downloadM3U8 = () => {
 
@@ -165,13 +159,4 @@ const rufs = {
 };
 window.rufs = rufs;
 
-
-    </script>
-</head>
-<body>
-    <button id="upload">上传</button>
-    <script>
-
-    </script>
-</body>
-</html>
+module.exports = rufs;

@@ -58,6 +58,7 @@ public class M3u8Controller {
 
     @GetMapping("/index")
     public ResponseEntity<byte[]> getM3U8Content(@RequestParam String filename, @RequestParam(value = "project", defaultValue = "other") String project) {
+        System.out.println(" m3u8 index start");
         try {
 
             String uploadDir = env.getProperty("file.upload-dir") + "/" + project;

@@ -15,6 +15,9 @@ public class VideoToM3u8AndTSUtil {
 
     public static boolean convert(String srcPathname, String destPathname, String baseUrl) {
         try {
+            System.out.println(srcPathname);
+            System.out.println(baseUrl);
+            System.out.println(destPathname);
             ProcessBuilder processBuilder = new ProcessBuilder("ffmpeg", "-i", srcPathname, "-c:v", "libx264", "-hls_time", "5",
                     "-hls_list_size", "0", "-c:a", "aac", "-strict", "-2", "-f", "hls", "-hls_base_url", baseUrl, destPathname);
             processBuilder.redirectErrorStream(true);
