@@ -17,6 +17,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.time.Instant;
 import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
 
 
 @CrossOrigin("*")
@@ -45,10 +46,14 @@ public class M3u8Controller {
             String filename = VideoToM3u8AndTSUtil.getFilenameWithoutSuffix(Objects.requireNonNull(fileName));
             String destPathname = uploadDir + "/" + filename + ".m3u8";
 
-            boolean converted = VideoToM3u8AndTSUtil.convert(srcPathname, destPathname, String.format("/m3u8/ts/%s/", project));
-            if (!converted) {
-                return Result.Error("m3u8转换失败");
-            }
+            // 异步执行转换操作
+            CompletableFuture<Boolean> conversionFuture = CompletableFuture.supplyAsync(() -> {
+                try {
+                    return VideoToM3u8AndTSUtil.convert(srcPathname, destPathname, String.format("/m3u8/ts/%s/", project));
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            });
 
             return Result.OkUpload("/m3u8/index",  filename + ".m3u8", "application/vnd.apple.mpegurl", project);
         } catch (IOException e) {
