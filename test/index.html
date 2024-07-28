@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Title</title>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script src="../dist/rufs.umd.js" ></script>
 </head>
 <body>
@@ -11,30 +12,49 @@
     <button id="sliceUpload">分片文件上传</button>
     <button id="sliceDownload">分片文件下载</button>
     <script >
-        document.getElementById("upload").addEventListener("click", async () =>  {
-            const res = await window.rufs.simpleUpload("http://localhost:1024/simplefile/upload", "wl")
-            console.log(res)
-        })
-        document.getElementById("dwonload").addEventListener("click", async () =>  {
-            const res = await window.rufs.simpleDownload("http://localhost:1024/simplefile/download?filename=1717810534479logo.png&mediaType=image/png&project=wl")
+        const {createAxios, useRuoyiApi, useRuoyiModuleApi, useRuoyiAuth, useRuoyiFileApi} = window.rufs
+        const http = createAxios(axios, "http://docs.feli.top:2473/")
+        const {uploadFile} = useRuoyiFileApi(http)
+ 
+        const {login} = useRuoyiAuth(http)
+        login({}).then(res => {
             console.log(res)
         })
 
-        document.getElementById("sliceUpload").addEventListener("click",  async () =>  {
-            const res = await window.rufs.sliceUpload("http://localhost:1024/slicefile/upload","wl", 1024*1000)
-            console.log(res)
-        })
-        let params ={
-            "router": "/slicefile/download",
-            "fileName": "jdk-17.0.6.zip",
-            "fileMd5": "809837a1f22ea85ea70ab4d63447e013",
-            "chunkSize": 1024000,
-            "chunkCount": 177,
-            "project": "wl"
-        }
-        document.getElementById("sliceDownload").addEventListener("click",  async () =>  {
-            await window.rufs.sliceDownload("http://localhost:1024"+params.router, params)
-        })
+        const {selectListXhr} = useRuoyiApi(http, "system")
+        const xhr = useRuoyiModuleApi(http, "system", "article")
+
+        // console.log(xhr)
+
+        // xhr.selectArticleListXhr().then(res => {
+        //     console.log(res)
+        // })
+        // (async () => {
+        //     const res = await xhr.selectArticleListXhr()
+        //     console.log(res)
+        // })()
+        // selectListXhr("article")
+        document.getElementById("upload").addEventListener("click", uploadFile)
+        // document.getElementById("dwonload").addEventListener("click", async () =>  {
+        //     const res = await window.rufs.simpleDownload("http://localhost:1024/simplefile/download?filename=1717810534479logo.png&mediaType=image/png&project=wl")
+        //     console.log(res)
+        // })
+
+        // document.getElementById("sliceUpload").addEventListener("click",  async () =>  {
+        //     const res = await window.rufs.sliceUpload("http://localhost:1024/slicefile/upload","wl", 1024*1000)
+        //     console.log(res)
+        // })
+        // let params ={
+        //     "router": "/slicefile/download",
+        //     "fileName": "jdk-17.0.6.zip",
+        //     "fileMd5": "809837a1f22ea85ea70ab4d63447e013",
+        //     "chunkSize": 1024000,
+        //     "chunkCount": 177,
+        //     "project": "wl"
+        // }
+        // document.getElementById("sliceDownload").addEventListener("click",  async () =>  {
+        //     await window.rufs.sliceDownload("http://localhost:1024"+params.router, params)
+        // })
     </script>
 </body>
 </html>

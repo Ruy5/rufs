@@ -1,24 +1,22 @@
 {
     "name": "rufs",
-    "version": "0.0.1",
+    "version": "0.0.2",
     "private": false,
     "description": "a",
     "scripts": {
-      "test": "echo \"Error: no test specified\" && exit 1",
-      "build": "rollup --config rollup.config.js",
-      "pub": "npm publish"
+        "test": "echo \"Error: no test specified\" && exit 1",
+        "build": "rollup --config rollup.config.js",
+        "pub": "npm publish"
     },
     "author": "",
     "license": "ISC",
     "type": "module",
     "files": [
-      "dist/*"
-    ],    
+        "dist/*"
+    ],
     "main": "dist/rufs.cjs.js",
     "module": "dist/rufs.esm.js",
     "dependencies": {
-    },
-    "devDependencies": {
+        "axios": "^1.7.2"
     }
-  }
-  
+}

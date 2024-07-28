@@ -1,8 +1,8 @@
 (function (global, factory) {
-    typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
-    typeof define === 'function' && define.amd ? define(factory) :
-    (global = typeof globalThis !== 'undefined' ? globalThis : global || self, global.fw = factory());
-})(this, (function () { 'use strict';
+    typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
+    typeof define === 'function' && define.amd ? define(['exports'], factory) :
+    (global = typeof globalThis !== 'undefined' ? globalThis : global || self, factory(global.fw = {}));
+})(this, (function (exports) { 'use strict';
 
     const downloadM3U8 = () => {
 
@@ -158,11 +158,149 @@
       });
     };
 
+    const createAxios = (
+      axios,
+      baseUrl,
+      autoSetAuthorization = true,
+      autoSetToken = true
+    ) => {
+      const http = axios.create({
+        baseURL: baseUrl,
+        timeout: 5000,
+      });
+
+      http.interceptors.request.use(
+        (config) => {
+          if (!config.headers["Content-Type"]) {
+            config.headers["Content-Type"] = "application/json;charset=UTF-8";
+          }
+          if (autoSetAuthorization && localStorage.getItem("token")) {
+            config.headers["Authorization"] = localStorage.getItem("token");
+          }
+          return config;
+        },
+        (error) => {
+          return Promise.reject(error);
+        }
+      );
+
+      http.interceptors.response.use(
+        (response) => {
+          if (autoSetToken && response.data.code == 200 && response.data.token) {
+            localStorage.setItem("token", response.data.token);
+          }
+          return response;
+        },
+        (error) => {
+          return Promise.reject(error);
+        }
+      );
+      return http;
+    };
+
+    const useRuoyiAuth = (axios) => {
+      return {
+        login: async (data) => {
+          const res = await axios.post(`/login`, data);
+          return res.data;
+        },
+        getInfo: async () => {
+          const res = await axios.get(`/getInfo`);
+          return res.data;
+        },
+      };
+    };
+
+    const useRuoyiFileApi = (axios) => {
+      return {
+        uploadFile: () => {
+          return new Promise(function (resolve, reject) {
+            const upload = (file) => {
+              const param = new FormData();
+              param.append("file", file);
+              const config = { headers: { "Content-Type": "multipart/form-data" } };
+              axios
+                .post("/common/upload", param, config)
+                .then((data) => resolve(data))
+                .catch((error) => reject(error));
+            };
+            createFileInput(upload);
+          });
+        },
+      };
+    };
+
+    const useRuoyiApi = (axios, prefix = "system") => {
+      return {
+        updateXhr: async (module, data = {}) => {
+          const res = await axios.put(`/${prefix}/${module}`, data);
+          return res.data;
+        },
+        insterXhr: async (module, data = {}) => {
+          const res = await axios.post(`/${prefix}/${module}`, data);
+          return res.data;
+        },
+        selectXhr: async (module, id) => {
+          const res = await axios.get(`/${prefix}/${module}/${id}`);
+          return res.data;
+        },
+        deleteXhr: async (module, id) => {
+          const res = await axios.delete(`/${prefix}/${module}/${id}`);
+          return res.data;
+        },
+        selectListXhr: async (module) => {
+          const res = await axios.get(`/${prefix}/${module}/list`);
+          return res.data;
+        },
+      };
+    };
+
+    function capitalizeFirstLetter(string) {
+      if (typeof string !== "string" || string.length === 0) {
+        return string;
+      }
+      return string.charAt(0).toUpperCase() + string.slice(1);
+    }
+
+    const useRuoyiModuleApi = (axios, prefix = "system", module) => {
+      const { updateXhr, insterXhr, selectXhr, deleteXhr, selectListXhr } =
+        useRuoyiApi(axios, prefix);
+      const func = {};
+      func[`update${capitalizeFirstLetter(module)}Xhr`] = async (data) => {
+        return await updateXhr(module, data);
+      };
+
+      func[`inster${capitalizeFirstLetter(module)}Xhr`] = async (data) => {
+        return await insterXhr(module, data);
+      };
+
+      func[`select${capitalizeFirstLetter(module)}Xhr`] = async (id) => {
+        return await selectXhr(module, id);
+      };
+
+      func[`delete${capitalizeFirstLetter(module)}Xhr`] = async (id) => {
+        return await deleteXhr(module, id);
+      };
+
+      func[`select${capitalizeFirstLetter(module)}ListXhr`] = async () => {
+        return await selectListXhr(module);
+      };
+
+      return func;
+    };
+
     const rufs = {
-        downloadM3U8, simpleUpload, simpleDownload, sliceDownload, sliceUpload
+        downloadM3U8, simpleUpload, simpleDownload, sliceDownload, sliceUpload, createAxios, useRuoyiApi, useRuoyiModuleApi, useRuoyiAuth, useRuoyiFileApi
     };
     window.rufs = rufs;
 
-    return rufs;
+    exports.createAxios = createAxios;
+    exports.default = rufs;
+    exports.useRuoyiApi = useRuoyiApi;
+    exports.useRuoyiAuth = useRuoyiAuth;
+    exports.useRuoyiFileApi = useRuoyiFileApi;
+    exports.useRuoyiModuleApi = useRuoyiModuleApi;
+
+    Object.defineProperty(exports, '__esModule', { value: true });
 
 }));
