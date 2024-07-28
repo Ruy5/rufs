@@ -1,8 +1,11 @@
+import fs from 'fs';
+
 const downloadM3U8 = () => {
 
 };
 
 function createFileInput(uploadFunc) {
+    if(! document) return
     const fileInput = document.createElement('input');
     fileInput.type = 'file';
     fileInput.style.display = 'none';
@@ -249,7 +252,7 @@ const useRuoyiApi = (axios, prefix = "system") => {
   };
 };
 
-function capitalizeFirstLetter(string) {
+function capitalizeFirstLetter$1(string) {
   if (typeof string !== "string" || string.length === 0) {
     return string;
   }
@@ -260,32 +263,72 @@ const useRuoyiModuleApi = (axios, prefix = "system", module) => {
   const { updateXhr, insterXhr, selectXhr, deleteXhr, selectListXhr } =
     useRuoyiApi(axios, prefix);
   const func = {};
-  func[`update${capitalizeFirstLetter(module)}Xhr`] = async (data) => {
+  func[`update${capitalizeFirstLetter$1(module)}Xhr`] = async (data) => {
     return await updateXhr(module, data);
   };
 
-  func[`inster${capitalizeFirstLetter(module)}Xhr`] = async (data) => {
+  func[`inster${capitalizeFirstLetter$1(module)}Xhr`] = async (data) => {
     return await insterXhr(module, data);
   };
 
-  func[`select${capitalizeFirstLetter(module)}Xhr`] = async (id) => {
+  func[`select${capitalizeFirstLetter$1(module)}Xhr`] = async (id) => {
     return await selectXhr(module, id);
   };
 
-  func[`delete${capitalizeFirstLetter(module)}Xhr`] = async (id) => {
+  func[`delete${capitalizeFirstLetter$1(module)}Xhr`] = async (id) => {
     return await deleteXhr(module, id);
   };
 
-  func[`select${capitalizeFirstLetter(module)}ListXhr`] = async () => {
+  func[`select${capitalizeFirstLetter$1(module)}ListXhr`] = async () => {
     return await selectListXhr(module);
   };
 
   return func;
 };
 
-const rufs = {
-    downloadM3U8, simpleUpload, simpleDownload, sliceDownload, sliceUpload, createAxios, useRuoyiApi, useRuoyiModuleApi, useRuoyiAuth, useRuoyiFileApi
-};
-window.rufs = rufs;
+function capitalizeFirstLetter(string) {
+  if (typeof string !== "string" || string.length === 0) {
+    return string;
+  }
+  return string.charAt(0).toUpperCase() + string.slice(1);
+}
 
-export { createAxios, rufs as default, useRuoyiApi, useRuoyiAuth, useRuoyiFileApi, useRuoyiModuleApi };
+const genApiFile = (url, prefix, modules, path) => {
+  let str = `import {
+  createAxios,
+  useRuoyiAuth,
+  useRuoyiFileApi,
+  useRuoyiModuleApi,
+} from "rufs";
+import axios from "axios";
+
+const http = createAxios(axios, "${url}");
+
+export const { uploadFile } = useRuoyiFileApi(http);
+export const { login, getInfo } = useRuoyiAuth(http);
+
+`;
+  modules.forEach((module) => {
+    str += `
+export const {
+  update${capitalizeFirstLetter(module)}Xhr,
+  inster${capitalizeFirstLetter(module)}Xhr,
+  select${capitalizeFirstLetter(module)}Xhr,
+  delete${capitalizeFirstLetter(module)}Xhr,
+  select${capitalizeFirstLetter(module)}ListXhr,
+} = useRuoyiModuleApi(http, "${prefix}", "${module}");
+    `;
+  });
+
+  fs.writeFile(path, str, () => {
+    console.log("init success");
+  });
+};
+
+const rufs = {
+    downloadM3U8, simpleUpload, simpleDownload, sliceDownload, sliceUpload, createAxios, useRuoyiApi, useRuoyiModuleApi, useRuoyiAuth, useRuoyiFileApi, genApiFile
+};
+
+if(window) window.rufs = rufs;
+
+export { createAxios, rufs as default, genApiFile, useRuoyiApi, useRuoyiAuth, useRuoyiFileApi, useRuoyiModuleApi };

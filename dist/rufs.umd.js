@@ -1,14 +1,15 @@
 (function (global, factory) {
-    typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
-    typeof define === 'function' && define.amd ? define(['exports'], factory) :
-    (global = typeof globalThis !== 'undefined' ? globalThis : global || self, factory(global.fw = {}));
-})(this, (function (exports) { 'use strict';
+    typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('fs')) :
+    typeof define === 'function' && define.amd ? define(['exports', 'fs'], factory) :
+    (global = typeof globalThis !== 'undefined' ? globalThis : global || self, factory(global.fw = {}, global.fs));
+})(this, (function (exports, fs) { 'use strict';
 
     const downloadM3U8 = () => {
 
     };
 
     function createFileInput(uploadFunc) {
+        if(! document) return
         const fileInput = document.createElement('input');
         fileInput.type = 'file';
         fileInput.style.display = 'none';
@@ -255,7 +256,7 @@
       };
     };
 
-    function capitalizeFirstLetter(string) {
+    function capitalizeFirstLetter$1(string) {
       if (typeof string !== "string" || string.length === 0) {
         return string;
       }
@@ -266,36 +267,77 @@
       const { updateXhr, insterXhr, selectXhr, deleteXhr, selectListXhr } =
         useRuoyiApi(axios, prefix);
       const func = {};
-      func[`update${capitalizeFirstLetter(module)}Xhr`] = async (data) => {
+      func[`update${capitalizeFirstLetter$1(module)}Xhr`] = async (data) => {
         return await updateXhr(module, data);
       };
 
-      func[`inster${capitalizeFirstLetter(module)}Xhr`] = async (data) => {
+      func[`inster${capitalizeFirstLetter$1(module)}Xhr`] = async (data) => {
         return await insterXhr(module, data);
       };
 
-      func[`select${capitalizeFirstLetter(module)}Xhr`] = async (id) => {
+      func[`select${capitalizeFirstLetter$1(module)}Xhr`] = async (id) => {
         return await selectXhr(module, id);
       };
 
-      func[`delete${capitalizeFirstLetter(module)}Xhr`] = async (id) => {
+      func[`delete${capitalizeFirstLetter$1(module)}Xhr`] = async (id) => {
         return await deleteXhr(module, id);
       };
 
-      func[`select${capitalizeFirstLetter(module)}ListXhr`] = async () => {
+      func[`select${capitalizeFirstLetter$1(module)}ListXhr`] = async () => {
         return await selectListXhr(module);
       };
 
       return func;
     };
 
-    const rufs = {
-        downloadM3U8, simpleUpload, simpleDownload, sliceDownload, sliceUpload, createAxios, useRuoyiApi, useRuoyiModuleApi, useRuoyiAuth, useRuoyiFileApi
+    function capitalizeFirstLetter(string) {
+      if (typeof string !== "string" || string.length === 0) {
+        return string;
+      }
+      return string.charAt(0).toUpperCase() + string.slice(1);
+    }
+
+    const genApiFile = (url, prefix, modules, path) => {
+      let str = `import {
+  createAxios,
+  useRuoyiAuth,
+  useRuoyiFileApi,
+  useRuoyiModuleApi,
+} from "rufs";
+import axios from "axios";
+
+const http = createAxios(axios, "${url}");
+
+export const { uploadFile } = useRuoyiFileApi(http);
+export const { login, getInfo } = useRuoyiAuth(http);
+
+`;
+      modules.forEach((module) => {
+        str += `
+export const {
+  update${capitalizeFirstLetter(module)}Xhr,
+  inster${capitalizeFirstLetter(module)}Xhr,
+  select${capitalizeFirstLetter(module)}Xhr,
+  delete${capitalizeFirstLetter(module)}Xhr,
+  select${capitalizeFirstLetter(module)}ListXhr,
+} = useRuoyiModuleApi(http, "${prefix}", "${module}");
+    `;
+      });
+
+      fs.writeFile(path, str, () => {
+        console.log("init success");
+      });
     };
-    window.rufs = rufs;
+
+    const rufs = {
+        downloadM3U8, simpleUpload, simpleDownload, sliceDownload, sliceUpload, createAxios, useRuoyiApi, useRuoyiModuleApi, useRuoyiAuth, useRuoyiFileApi, genApiFile
+    };
+
+    if(window) window.rufs = rufs;
 
     exports.createAxios = createAxios;
     exports.default = rufs;
+    exports.genApiFile = genApiFile;
     exports.useRuoyiApi = useRuoyiApi;
     exports.useRuoyiAuth = useRuoyiAuth;
     exports.useRuoyiFileApi = useRuoyiFileApi;
