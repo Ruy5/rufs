@@ -90,8 +90,10 @@ export const useRuoyiApi = (axios, prefix = "system") => {
       const res = await axios.delete(`/${prefix}/${module}/${id}`);
       return res.data;
     },
-    selectListXhr: async (module) => {
-      const res = await axios.get(`/${prefix}/${module}/list`);
+    selectListXhr: async (module, params={}) => {
+      const res = await axios.get(`/${prefix}/${module}/list`, {
+        params: params
+      });
       return res.data;
     },
   };
@@ -124,8 +126,8 @@ export const useRuoyiModuleApi = (axios, prefix = "system", module) => {
     return await deleteXhr(module, id);
   };
 
-  func[`select${capitalizeFirstLetter(module)}ListXhr`] = async () => {
-    return await selectListXhr(module);
+  func[`select${capitalizeFirstLetter(module)}ListXhr`] = async (params) => {
+    return await selectListXhr(module, params);
   };
 
   return func;
